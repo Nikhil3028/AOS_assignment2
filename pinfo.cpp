@@ -29,17 +29,20 @@ void pinfo(const string& pidStr) {
     
     // Read process status from /proc/[pid]/stat
     string statPath = "/proc/" + to_string(pid) + "/stat";
-    ifstream statFile(statPath);
+    FILE* statFile = fopen(statPath.c_str(), "r");
     
-    if (!statFile.is_open()) {
+    if (!statFile) {
         cout << "Process with PID " << pid << " not found" << endl;
         restoreOutput(saved_stdout);
         return;
     }
     
+    char buffer[1024];
     string line;
-    getline(statFile, line);
-    statFile.close();
+    if (fgets(buffer, sizeof(buffer), statFile) != NULL) {
+        line = buffer;
+    }
+    fclose(statFile);
     
     // Parse the stat file
     istringstream iss(line);

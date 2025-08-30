@@ -1,0 +1,10 @@
+echo hello world | grep hello
+echo test123 | wc -l
+ls -l | head -3
+pwd | cat
+echo "multiple words here" | wc -w
+ls | grep .cpp
+echo line1 | echo line2
+cat /etc/passwd | head -5 | tail -2
+echo testing | cat | cat
+ls -la | wc -l

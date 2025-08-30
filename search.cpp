@@ -1,5 +1,24 @@
 #include "Header.h"
 
+bool searchInFile(const string& filePath, const string& target) {
+    FILE* file = fopen(filePath.c_str(), "r");
+    if (!file) {
+        return false;
+    }
+    
+    char buffer[1024];
+    while (fgets(buffer, sizeof(buffer), file)) {
+        string line(buffer);
+        if (line.find(target) != string::npos) {
+            fclose(file);
+            return true;
+        }
+    }
+    
+    fclose(file);
+    return false;
+}
+
 bool searchRecursive(const string& currentPath, const string& target) {
     DIR* dir = opendir(currentPath.c_str());
     if (!dir) {
@@ -16,18 +35,26 @@ bool searchRecursive(const string& currentPath, const string& target) {
         string entryName = entry->d_name;
         string fullPath = currentPath + "/" + entryName;
         
-        // Check if this entry matches our target
+        // Check if the directory/file name matches the target
         if (entryName == target) {
             closedir(dir);
             return true;
         }
         
-        // If it's a directory, search recursively
         struct stat statbuf;
-        if (stat(fullPath.c_str(), &statbuf) == 0 && S_ISDIR(statbuf.st_mode)) {
-            if (searchRecursive(fullPath, target)) {
-                closedir(dir);
-                return true;
+        if (stat(fullPath.c_str(), &statbuf) == 0) {
+            if (S_ISREG(statbuf.st_mode)) {
+                // It's a regular file - search for text content
+                if (searchInFile(fullPath, target)) {
+                    closedir(dir);
+                    return true;
+                }
+            } else if (S_ISDIR(statbuf.st_mode)) {
+                // It's a directory - search recursively
+                if (searchRecursive(fullPath, target)) {
+                    closedir(dir);
+                    return true;
+                }
             }
         }
     }

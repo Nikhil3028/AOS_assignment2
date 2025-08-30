@@ -23,6 +23,8 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 using namespace std;
 
@@ -47,18 +49,9 @@ string getCleanCommand(const string& input);
 int setupOutputRedirection(const string& filename, bool append);
 void restoreOutput(int saved_stdout);
 
-// Pipe functions
-bool hasPipe(const string& input);
-vector<string> splitPipe(const string& input);
-void executePipe(const vector<string>& commands);
 
 // System command functions
 void executeSystemCommand(const string& input);
 
-// Pipe redirection functions
-bool pipeHasRedirection(const vector<string>& commands);
-string getPipeOutputFile(const vector<string>& commands, bool& append);
-vector<string> getCleanPipeCommands(const vector<string>& commands);
-void executePipeWithRedirection(const vector<string>& commands);
 
 #endif

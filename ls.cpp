@@ -55,13 +55,20 @@ void print_dir(const string& dirPath, bool showAll, bool longFormat) {
                 cout << fname;
             cout << endl;
         } else {
-            if (S_ISDIR(st.st_mode))
-                cout << "\033[31m" << fname << "\033[0m ";
-            else
-                cout << fname << " ";
+            // Check if stdout is a pipe (not a terminal)
+            if (!isatty(STDOUT_FILENO)) {
+                // Output one file per line for pipes
+                cout << fname << endl;
+            } else {
+                // Normal terminal output with spaces
+                if (S_ISDIR(st.st_mode))
+                    cout << "\033[31m" << fname << "\033[0m ";
+                else
+                    cout << fname << " ";
+            }
         }
     }
-    if (!longFormat) cout << endl;
+    if (!longFormat && isatty(STDOUT_FILENO)) cout << endl;
 }
 
 // Main ls dispatcher: pass argument string after "ls" (e.g., "-la dir1 dir2")

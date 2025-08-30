@@ -1,0 +1,4 @@
+ls | grep ".cpp"
+echo "hello world" | grep "hello"
+ls | grep "\.cpp"
+exit

@@ -21,6 +21,7 @@ void echo(const string &input) {
     if (first != string::npos) text = text.substr(first);
     
     cout << text << endl;
+    cout.flush();
     
     restoreOutput(saved_stdout);
 }

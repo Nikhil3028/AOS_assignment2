@@ -1,0 +1,4 @@
+search echo.cpp
+search nonexistent.txt
+search Makefile
+exit

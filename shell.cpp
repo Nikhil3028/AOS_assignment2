@@ -28,11 +28,21 @@ int main() {
 
     while (true) {
         display_hostname();
-        getline(cin, input);
         
-        if (cin.eof()) {
+        char* line = readline("");
+        if (line == NULL) {
             handle_ctrl_d();
+            break;
         }
+        
+        input = line;
+        
+        // Add to history if not empty
+        if (!input.empty()) {
+            add_history(line);
+        }
+        
+        free(line);
 
         if (input.empty()) continue;
 
@@ -45,12 +55,6 @@ int main() {
         for (int i = 0; i < commandCount; i++) {
             string currentInput = commands[i];
             
-            // Check for pipes first
-            if (hasPipe(currentInput)) {
-                vector<string> pipeCommands = splitPipe(currentInput);
-                executePipeWithRedirection(pipeCommands);
-                continue;
-            }
             
             char buffer[1024];
             strcpy(buffer, currentInput.c_str());
