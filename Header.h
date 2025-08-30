@@ -1,0 +1,42 @@
+#ifndef PROMPT_H
+#define PROMPT_H
+
+
+#include <iostream>
+#include <string>
+#include <unistd.h>
+#include <cstring>
+#include <limits.h>
+#include <cstdlib>
+#include <iomanip>
+#include <vector>
+#include <algorithm>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <pwd.h>
+#include <grp.h>
+#include <ctime>
+#include <sstream>
+#include <fstream>
+#include <exception>
+#include <signal.h>
+#include <sys/wait.h>
+
+using namespace std;
+
+void display_hostname();
+void echo(const string &input);
+void pwd();
+void cd(char* path);
+void ls(const string& argline);
+void print_dir(const string& dirPath, bool showAll, bool longFormat);
+void print_permissions(mode_t mode);
+void pinfo(const string& pidStr);
+void search(const string& filename);
+void clear_screen();
+void setup_signal_handlers();
+void set_foreground_process(pid_t pid);
+void handle_ctrl_d();
+
+#endif
