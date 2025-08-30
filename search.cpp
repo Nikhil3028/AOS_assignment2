@@ -37,8 +37,22 @@ bool searchRecursive(const string& currentPath, const string& target) {
 }
 
 void search(const string& filename) {
-    if (filename.empty()) {
+    int saved_stdout = -1;
+    string cleanFilename = filename;
+    
+    if (hasRedirection(filename)) {
+        bool append;
+        string outputFile = getOutputFile(filename, append);
+        if (!outputFile.empty()) {
+            saved_stdout = setupOutputRedirection(outputFile, append);
+            if (saved_stdout == -1) return;
+            cleanFilename = getCleanCommand(filename);
+        }
+    }
+    
+    if (cleanFilename.empty()) {
         cout << "Usage: search <filename>" << endl;
+        restoreOutput(saved_stdout);
         return;
     }
     
@@ -50,11 +64,13 @@ void search(const string& filename) {
     }
     
     // Search recursively from current directory
-    bool found = searchRecursive(string(cwd), filename);
+    bool found = searchRecursive(string(cwd), cleanFilename);
     
     if (found) {
         cout << "True" << endl;
     } else {
         cout << "False" << endl;
     }
+    
+    restoreOutput(saved_stdout);
 }

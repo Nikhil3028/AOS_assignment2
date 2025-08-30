@@ -66,8 +66,21 @@ void print_dir(const string& dirPath, bool showAll, bool longFormat) {
 
 // Main ls dispatcher: pass argument string after "ls" (e.g., "-la dir1 dir2")
 void ls(const string& argline) {
+    int saved_stdout = -1;
+    string cleanArgline = argline;
+    
+    if (hasRedirection(argline)) {
+        bool append;
+        string filename = getOutputFile(argline, append);
+        if (!filename.empty()) {
+            saved_stdout = setupOutputRedirection(filename, append);
+            if (saved_stdout == -1) return;
+            cleanArgline = getCleanCommand(argline);
+        }
+    }
+    
     vector<string> tokens;
-    stringstream ss(argline);
+    stringstream ss(cleanArgline);
     string tok;
     while (ss >> tok) tokens.push_back(tok);
 
@@ -132,4 +145,6 @@ void ls(const string& argline) {
         if (dirs.size() > 1 && d + 1 < dirs.size())
             cout << endl;
     }
+    
+    restoreOutput(saved_stdout);
 }

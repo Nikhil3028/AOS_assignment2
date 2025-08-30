@@ -1,17 +1,28 @@
 #include "Header.h"
 
 void pinfo(const string& pidStr) {
-    pid_t pid;
+    int saved_stdout = -1;
+    string cleanPidStr = pidStr;
     
-    if (pidStr.empty()) {
-        // If no PID provided, use current process PID
+    if (hasRedirection(pidStr)) {
+        bool append;
+        string filename = getOutputFile(pidStr, append);
+        if (!filename.empty()) {
+            saved_stdout = setupOutputRedirection(filename, append);
+            if (saved_stdout == -1) return;
+            cleanPidStr = getCleanCommand(pidStr);
+        }
+    }
+    
+    pid_t pid;
+    if (cleanPidStr.empty()) {
         pid = getpid();
     } else {
-        // Convert string to PID
         try {
-            pid = stoi(pidStr);
-        } catch (const exception& e) {
-            cout << "Invalid PID: " << pidStr << endl;
+            pid = stoi(cleanPidStr);
+        } catch (const exception&) {
+            cout << "Invalid PID: " << cleanPidStr << endl;
+            restoreOutput(saved_stdout);
             return;
         }
     }
@@ -22,6 +33,7 @@ void pinfo(const string& pidStr) {
     
     if (!statFile.is_open()) {
         cout << "Process with PID " << pid << " not found" << endl;
+        restoreOutput(saved_stdout);
         return;
     }
     
@@ -121,4 +133,6 @@ void pinfo(const string& pidStr) {
     
     cout << "memory -- " << vmSizeKB << " {Virtual Memory}" << endl;
     cout << "Executable Path -- " << execPath << endl;
+    
+    restoreOutput(saved_stdout);
 }

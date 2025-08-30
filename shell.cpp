@@ -45,6 +45,13 @@ int main() {
         for (int i = 0; i < commandCount; i++) {
             string currentInput = commands[i];
             
+            // Check for pipes first
+            if (hasPipe(currentInput)) {
+                vector<string> pipeCommands = splitPipe(currentInput);
+                executePipeWithRedirection(pipeCommands);
+                continue;
+            }
+            
             char buffer[1024];
             strcpy(buffer, currentInput.c_str());
 
@@ -60,12 +67,7 @@ int main() {
                 echo(currentInput);
             }
             else if (command == "pwd") {
-                char* extra = strtok(NULL, " \t");
-                if (extra) {
-                    cout << "pwd: too many arguments" << endl;
-                } else {
-                    pwd();
-                }
+                pwd(currentInput);
             }
             else if (command == "clear") {
                 clear_screen();
@@ -92,14 +94,16 @@ int main() {
                 ls(rest);
             }
             else if (command == "pinfo") {
-                char* pidArg = strtok(NULL, " \t");
-                char* extra = strtok(NULL, " \t");
-                if (extra) {
-                    cout << "pinfo: too many arguments" << endl;
-                } else {
-                    string pidStr = pidArg ? string(pidArg) : "";
-                    pinfo(pidStr);
-                }
+                // take everything after "pinfo"
+                size_t pos = currentInput.find("pinfo");
+                string rest = (pos != string::npos) ? currentInput.substr(pos + 5) : "";
+
+                // trim leading spaces
+                size_t first = rest.find_first_not_of(" \t");
+                if (first != string::npos) rest = rest.substr(first);
+                else rest = "";
+
+                pinfo(rest);
             }
             else if (command == "search") {
                 char* filename = strtok(NULL, " \t");
@@ -112,7 +116,7 @@ int main() {
                 }
             }
             else {
-                cout << "Unknown command: " << command << endl;
+                executeSystemCommand(currentInput);
             }
         }
     }

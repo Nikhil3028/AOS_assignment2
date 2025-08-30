@@ -22,12 +22,13 @@
 #include <exception>
 #include <signal.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 using namespace std;
 
 void display_hostname();
 void echo(const string &input);
-void pwd();
+void pwd(const string& input = "");
 void cd(char* path);
 void ls(const string& argline);
 void print_dir(const string& dirPath, bool showAll, bool longFormat);
@@ -38,5 +39,26 @@ void clear_screen();
 void setup_signal_handlers();
 void set_foreground_process(pid_t pid);
 void handle_ctrl_d();
+
+// Redirection functions
+bool hasRedirection(const string& input);
+string getOutputFile(const string& input, bool& append);
+string getCleanCommand(const string& input);
+int setupOutputRedirection(const string& filename, bool append);
+void restoreOutput(int saved_stdout);
+
+// Pipe functions
+bool hasPipe(const string& input);
+vector<string> splitPipe(const string& input);
+void executePipe(const vector<string>& commands);
+
+// System command functions
+void executeSystemCommand(const string& input);
+
+// Pipe redirection functions
+bool pipeHasRedirection(const vector<string>& commands);
+string getPipeOutputFile(const vector<string>& commands, bool& append);
+vector<string> getCleanPipeCommands(const vector<string>& commands);
+void executePipeWithRedirection(const vector<string>& commands);
 
 #endif

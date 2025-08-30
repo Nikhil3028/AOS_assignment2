@@ -1,31 +1,51 @@
 #include "Header.h"
 
 void echo(const string &input) {
-    string data = (input.size() > 4) ? input.substr(4) : "";
-    string result;
-    bool space = false;
-
-    for (char ch : data) {
-        if (ch == ';') break;                    // stop at ';'
-        if (isspace((unsigned char)ch)) {
-            space = true;
-        } else {
-            if (space && !result.empty()) result += ' ';
-            result += ch;
-            space = false;
+    int saved_stdout = -1;
+    string cleanInput = input;
+    
+    if (hasRedirection(input)) {
+        bool append;
+        string filename = getOutputFile(input, append);
+        if (!filename.empty()) {
+            saved_stdout = setupOutputRedirection(filename, append);
+            if (saved_stdout == -1) return;
+            cleanInput = getCleanCommand(input);
         }
     }
-    cout << result << '\n';
+    
+    string text = cleanInput.substr(4); // Remove "echo"
+    
+    // trim leading spaces
+    size_t first = text.find_first_not_of(" \t");
+    if (first != string::npos) text = text.substr(first);
+    
+    cout << text << endl;
+    
+    restoreOutput(saved_stdout);
 }
 
 
-void pwd() {
+void pwd(const string& input) {
+    int saved_stdout = -1;
+    
+    if (hasRedirection(input)) {
+        bool append;
+        string filename = getOutputFile(input, append);
+        if (!filename.empty()) {
+            saved_stdout = setupOutputRedirection(filename, append);
+            if (saved_stdout == -1) return;
+        }
+    }
+    
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
         cout << cwd << endl;
     } else {
         perror("pwd");
     }
+    
+    restoreOutput(saved_stdout);
 }
 
 void clear_screen() {
