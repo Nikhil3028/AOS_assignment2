@@ -1,4 +1,0 @@
-ls | grep .cpp
-echo hello world | grep hello
-ls -l | head -3
-exit

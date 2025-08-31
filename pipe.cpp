@@ -151,3 +151,8 @@ void executePipe(const vector<string>& commands) {
     
     if (prev_fd != -1) close(prev_fd);
 }
+
+void executePipeline(const string& input) {
+    vector<string> commands = splitPipe(input);
+    executePipe(commands);
+}

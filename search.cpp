@@ -77,10 +77,24 @@ void search(const string& filename) {
         }
     }
     
+    // If no filename provided, try to read from stdin (for pipeline usage)
     if (cleanFilename.empty()) {
-        cout << "Usage: search <filename>" << endl;
-        restoreOutput(saved_stdout);
-        return;
+        string line;
+        char buffer[1024];
+        if (fgets(buffer, sizeof(buffer), stdin)) {
+            line = buffer;
+            // Remove newline if present
+            if (!line.empty() && line.back() == '\n') {
+                line.pop_back();
+            }
+            cleanFilename = line;
+        }
+        
+        if (cleanFilename.empty()) {
+            cout << "Usage: search <filename>" << endl;
+            restoreOutput(saved_stdout);
+            return;
+        }
     }
     
     // Get current working directory

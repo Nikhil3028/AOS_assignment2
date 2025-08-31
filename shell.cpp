@@ -55,6 +55,11 @@ int main() {
         for (int i = 0; i < commandCount; i++) {
             string currentInput = commands[i];
             
+            // Check if command contains pipe
+            if (hasPipe(currentInput)) {
+                executePipeline(currentInput);
+                continue;
+            }
             
             char buffer[1024];
             strcpy(buffer, currentInput.c_str());

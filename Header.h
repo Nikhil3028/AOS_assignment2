@@ -53,5 +53,14 @@ void restoreOutput(int saved_stdout);
 // System command functions
 void executeSystemCommand(const string& input);
 
+// Pipeline functions
+bool hasPipe(const string& input);
+void executePipeline(const string& input);
+bool isInternalCommand(const string& command);
+vector<string> parseCommand(const string& cmdStr);
+vector<string> splitByPipes(const string& input);
+void executeInternalCommand(const string& cmdStr, int inputFd, int outputFd);
+void executeExternalCommand(const string& cmdStr, int inputFd, int outputFd);
+
 
 #endif
