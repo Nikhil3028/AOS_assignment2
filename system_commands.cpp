@@ -16,6 +16,33 @@ void executeSystemCommand(const string& input) {
         }
     }
     
+    // Handle redirection
+    int saved_stdout = -1;
+    int saved_stdin = -1;
+    
+    if (hasRedirection(cleanInput)) {
+        // Handle output redirection
+        bool append = false;
+        string outputFile = getOutputFile(cleanInput, append);
+        if (!outputFile.empty()) {
+            saved_stdout = setupOutputRedirection(outputFile, append);
+            if (saved_stdout == -1) return;
+        }
+        
+        // Handle input redirection
+        string inputFile = getInputFile(cleanInput);
+        if (!inputFile.empty()) {
+            saved_stdin = setupInputRedirection(inputFile);
+            if (saved_stdin == -1) {
+                if (saved_stdout != -1) restoreOutput(saved_stdout);
+                return;
+            }
+        }
+        
+        // Get clean command without redirection
+        cleanInput = getCleanCommand(cleanInput);
+    }
+    
     // Parse command and arguments
     vector<string> args;
     stringstream ss(cleanInput);
@@ -35,6 +62,20 @@ void executeSystemCommand(const string& input) {
         pid_t pid = fork();
         if (pid == 0) {
             // Child process
+            if (isBackground) {
+                // Redirect all I/O to /dev/null for background processes
+                int devnull_out = open("/dev/null", O_WRONLY);
+                if (devnull_out != -1) {
+                    dup2(devnull_out, STDOUT_FILENO);
+                    dup2(devnull_out, STDERR_FILENO);
+                    close(devnull_out);
+                }
+                int devnull_in = open("/dev/null", O_RDONLY);
+                if (devnull_in != -1) {
+                    dup2(devnull_in, STDIN_FILENO);
+                    close(devnull_in);
+                }
+            }
             execvp(argv[0], argv.data());
             perror(argv[0]);
             exit(1);
@@ -42,10 +83,22 @@ void executeSystemCommand(const string& input) {
             if (isBackground) {
                 cout << "[" << pid << "]" << endl;
             } else {
-                wait(NULL);
+                set_foreground_process(pid);
+                int status;
+                waitpid(pid, &status, WUNTRACED);
+                if (WIFSTOPPED(status)) {
+                    // Process was stopped by CTRL-Z, don't reset foreground_pid yet
+                    // It will be reset by the signal handler
+                } else {
+                    set_foreground_process(0);
+                }
             }
         } else {
             perror("fork");
         }
     }
+    
+    // Restore redirections
+    if (saved_stdout != -1) restoreOutput(saved_stdout);
+    if (saved_stdin != -1) restoreInput(saved_stdin);
 }

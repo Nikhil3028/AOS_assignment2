@@ -45,9 +45,12 @@ void handle_ctrl_d();
 // Redirection functions
 bool hasRedirection(const string& input);
 string getOutputFile(const string& input, bool& append);
+string getInputFile(const string& input);
 string getCleanCommand(const string& input);
 int setupOutputRedirection(const string& filename, bool append);
+int setupInputRedirection(const string& filename);
 void restoreOutput(int saved_stdout);
+void restoreInput(int saved_stdin);
 
 
 // System command functions
