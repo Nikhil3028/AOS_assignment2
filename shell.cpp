@@ -27,9 +27,9 @@ int main() {
     setup_signal_handlers();
 
     while (true) {
-        display_hostname();
+        string prompt = display_hostname();
         
-        char* line = readline("");
+        char* line = readline(prompt.c_str());
         if (line == NULL) {
             handle_ctrl_d();
             break;

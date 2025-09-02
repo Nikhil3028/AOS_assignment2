@@ -1,6 +1,6 @@
 #include "Header.h"
 
-void display_hostname() {
+string display_hostname() {
     static bool firstRun = true;      // track first execution
     static string launchDir;          // store directory where program started
 
@@ -10,30 +10,29 @@ void display_hostname() {
 
     if (gethostname(hostname, sizeof(hostname)) != 0) {
         perror("gethostname");
-        return;
+        return "$ ";
     }
 
     if (firstRun) {
         // Capture launch directory on first run
         if (getcwd(cwd, sizeof(cwd)) == NULL) {
             perror("getcwd");
-            return;
+            return "$ ";
         }
         launchDir = cwd;
 
         // First prompt → only hostname
-        cout << "\033[34m"
-             << (username ? username : "user")
-             << "@" << hostname
-             << ":--> \033[0m";
+        string prompt = "\033[34m";
+        prompt += (username ? username : "user");
+        prompt += "@" + string(hostname) + ":--> \033[0m";
         firstRun = false;
-        return;
+        return prompt;
     }
 
     // Get current working directory
     if (getcwd(cwd, sizeof(cwd)) == NULL) {
         perror("getcwd");
-        return;
+        return "$ ";
     }
 
     string cwdStr = cwd;
@@ -44,27 +43,26 @@ void display_hostname() {
         cwdStr.replace(0, string(home).length(), "~");
     }
 
+    string prompt = "\033[34m";
+    prompt += (username ? username : "user");
+    prompt += "@" + string(hostname);
+
     // Case 1: if in launch directory → only hostname
-    if (cwd == launchDir) {
-        cout << "\033[34m"
-             << (username ? username : "user")
-             << "@" << hostname
-             << ":--> \033[0m";
-        return;
+    if (string(cwd) == launchDir) {
+        prompt += ":--> \033[0m";
+        return prompt;
     }
 
     // Case 2: otherwise → username@host:cwd
-    cout << "\033[34m"
-         << (username ? username : "user")
-         << "@" << hostname
-         << ":";
+    prompt += ":";
 
     // cwd: blue if home (~), yellow otherwise
     if (!cwdStr.empty() && cwdStr[0] == '~') {
-        cout << "\033[34m" << cwdStr;
+        prompt += "\033[34m" + cwdStr;
     } else {
-        cout << "\033[33m" << cwdStr;
+        prompt += "\033[33m" + cwdStr;
     }
 
-    cout << "\033[34m$ \033[0m";
+    prompt += "\033[34m$ \033[0m";
+    return prompt;
 }

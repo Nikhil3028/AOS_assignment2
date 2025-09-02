@@ -28,7 +28,7 @@
 
 using namespace std;
 
-void display_hostname();
+string display_hostname();
 void echo(const string &input);
 void pwd(const string& input = "");
 void cd(char* path);
