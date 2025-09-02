@@ -55,9 +55,21 @@ int main() {
         for (int i = 0; i < commandCount; i++) {
             string currentInput = commands[i];
             
-            // Check if command contains pipe
+            // Check if command contains both pipe and redirection
+            if (hasPipeAndRedirection(currentInput)) {
+                executePipeWithRedirection(currentInput);
+                continue;
+            }
+            
+            // Check if command contains pipe only
             if (hasPipe(currentInput)) {
                 executePipeline(currentInput);
+                continue;
+            }
+            
+            // Check if command contains redirection only
+            if (hasRedirection(currentInput)) {
+                executeSystemCommand(currentInput);
                 continue;
             }
             

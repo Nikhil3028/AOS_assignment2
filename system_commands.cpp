@@ -52,49 +52,86 @@ void executeSystemCommand(const string& input) {
     }
     
     if (!args.empty()) {
-        // Convert to char* array
-        vector<char*> argv;
-        for (const string& a : args) {
-            argv.push_back(const_cast<char*>(a.c_str()));
-        }
-        argv.push_back(nullptr);
+        string command = args[0];
         
-        pid_t pid = fork();
-        if (pid == 0) {
-            // Child process
-            if (isBackground) {
-                // Redirect all I/O to /dev/null for background processes
-                int devnull_out = open("/dev/null", O_WRONLY);
-                if (devnull_out != -1) {
-                    dup2(devnull_out, STDOUT_FILENO);
-                    dup2(devnull_out, STDERR_FILENO);
-                    close(devnull_out);
-                }
-                int devnull_in = open("/dev/null", O_RDONLY);
-                if (devnull_in != -1) {
-                    dup2(devnull_in, STDIN_FILENO);
-                    close(devnull_in);
-                }
+        // Check if it's an internal command
+        if (isInternalCommand(command)) {
+            // Execute internal command directly (no fork needed for internal commands)
+            if (command == "echo") {
+                echo(cleanInput);
             }
-            execvp(argv[0], argv.data());
-            perror(argv[0]);
-            exit(1);
-        } else if (pid > 0) {
-            if (isBackground) {
-                cout << "[" << pid << "]" << endl;
-            } else {
-                set_foreground_process(pid);
-                int status;
-                waitpid(pid, &status, WUNTRACED);
-                if (WIFSTOPPED(status)) {
-                    // Process was stopped by CTRL-Z, don't reset foreground_pid yet
-                    // It will be reset by the signal handler
+            else if (command == "pwd") {
+                pwd(cleanInput);
+            }
+            else if (command == "ls") {
+                size_t pos = cleanInput.find("ls");
+                string rest = (pos != string::npos) ? cleanInput.substr(pos + 2) : "";
+                size_t first = rest.find_first_not_of(" \t");
+                if (first != string::npos) rest = rest.substr(first);
+                else rest = "";
+                ls(rest);
+            }
+            else if (command == "pinfo") {
+                size_t pos = cleanInput.find("pinfo");
+                string rest = (pos != string::npos) ? cleanInput.substr(pos + 5) : "";
+                size_t first = rest.find_first_not_of(" \t");
+                if (first != string::npos) rest = rest.substr(first);
+                else rest = "";
+                pinfo(rest);
+            }
+            else if (command == "search") {
+                stringstream ss(cleanInput);
+                string cmd, filename;
+                ss >> cmd >> filename;
+                search(filename);
+            }
+        }
+        else {
+            // External command - use execvp
+            // Convert to char* array
+            vector<char*> argv;
+            for (const string& a : args) {
+                argv.push_back(const_cast<char*>(a.c_str()));
+            }
+            argv.push_back(nullptr);
+            
+            pid_t pid = fork();
+            if (pid == 0) {
+                // Child process
+                if (isBackground) {
+                    // Redirect all I/O to /dev/null for background processes
+                    int devnull_out = open("/dev/null", O_WRONLY);
+                    if (devnull_out != -1) {
+                        dup2(devnull_out, STDOUT_FILENO);
+                        dup2(devnull_out, STDERR_FILENO);
+                        close(devnull_out);
+                    }
+                    int devnull_in = open("/dev/null", O_RDONLY);
+                    if (devnull_in != -1) {
+                        dup2(devnull_in, STDIN_FILENO);
+                        close(devnull_in);
+                    }
+                }
+                execvp(argv[0], argv.data());
+                perror(argv[0]);
+                exit(1);
+            } else if (pid > 0) {
+                if (isBackground) {
+                    cout << "[" << pid << "]" << endl;
                 } else {
-                    set_foreground_process(0);
+                    set_foreground_process(pid);
+                    int status;
+                    waitpid(pid, &status, WUNTRACED);
+                    if (WIFSTOPPED(status)) {
+                        // Process was stopped by CTRL-Z, don't reset foreground_pid yet
+                        // It will be reset by the signal handler
+                    } else {
+                        set_foreground_process(0);
+                    }
                 }
+            } else {
+                perror("fork");
             }
-        } else {
-            perror("fork");
         }
     }
     

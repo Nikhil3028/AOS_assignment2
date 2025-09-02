@@ -59,11 +59,21 @@ void executeSystemCommand(const string& input);
 // Pipeline functions
 bool hasPipe(const string& input);
 void executePipeline(const string& input);
+void executePipe(const vector<string>& commands);
 bool isInternalCommand(const string& command);
 vector<string> parseCommand(const string& cmdStr);
-vector<string> splitByPipes(const string& input);
+vector<string> splitPipe(const string& input);
 void executeInternalCommand(const string& cmdStr, int inputFd, int outputFd);
 void executeExternalCommand(const string& cmdStr, int inputFd, int outputFd);
+
+// Pipeline with redirection functions
+bool hasPipeAndRedirection(const string& input);
+bool pipeHasInputRedirection(const vector<string>& commands);
+bool pipeHasOutputRedirection(const vector<string>& commands);
+string getPipeInputFile(const vector<string>& commands);
+string getPipeOutputFile(const vector<string>& commands, bool& append);
+vector<string> getCleanPipeCommands(const vector<string>& commands);
+void executePipeWithRedirection(const string& input);
 
 
 #endif
