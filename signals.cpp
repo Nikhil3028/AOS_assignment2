@@ -11,10 +11,11 @@ void sigint_handler(int ) {
         kill(foreground_pid, SIGINT);
         foreground_pid = 0;
     } else {
-        // No foreground process - start new line and show prompt
-        cout << "\n";
-        display_hostname();
-        fflush(stdout);
+        // No foreground process - let readline handle it
+        printf("\n");
+        rl_on_new_line();
+        rl_replace_line("", 0);
+        rl_redisplay();
     }
 }
 

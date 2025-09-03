@@ -26,6 +26,7 @@ int main() {
     
     setup_signal_handlers();
     initialize_autocomplete();
+    initializeHistory();
 
     while (true) {
         string prompt = display_hostname();
@@ -38,9 +39,9 @@ int main() {
         
         input = line;
         
-        // Add to history if not empty
+        // Add to custom history if not empty
         if (!input.empty()) {
-            add_history(line);
+            addToHistory(input);
         }
         
         free(line);
@@ -83,7 +84,12 @@ int main() {
             string command = token;
 
             if (command == "exit") {
+                // Make sure exit command is saved to history
+                saveHistory();
                 return 0;
+            }
+            else if (command == "history") {
+                handleHistoryCommand(currentInput);
             }
             else if (command == "echo") {
                 echo(currentInput);

@@ -82,4 +82,17 @@ char** shell_completion(const char* text, int start, int end);
 void initialize_autocomplete();
 void display_matches(char** matches, int num_matches, int max_length);
 
+// History functions
+void initializeHistory();
+void addToHistory(const string& command);
+void handleHistoryCommand(const string& input);
+void displayHistory(int num);
+string getPreviousCommand();
+string getNextCommand();
+void resetHistoryNavigation();
+bool isHistoryCommand(const string& input);
+void loadHistory();
+void saveHistory();
+string getHistoryFilePath();
+
 #endif
