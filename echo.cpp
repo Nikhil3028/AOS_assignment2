@@ -2,9 +2,7 @@
 
 // Echo command implementation
 void echo(const string &input) {
-    string clean_input = input;
-       
-    string text = clean_input.substr(4); // Remove "echo"
+    string text = input.substr(4); // Remove "echo"
     
     // Trim leading spaces
     size_t first = text.find_first_not_of(" \t");

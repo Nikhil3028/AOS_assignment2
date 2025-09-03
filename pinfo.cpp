@@ -48,8 +48,6 @@ void pinfo(const string& pid_str) {
     fclose(stat_file);
     
     // Parse the stat file
-    istringstream iss(line);
-    string token;
     vector<string> tokens;
     
     // Split by spaces, but handle the command name which can contain spaces and is in parentheses
@@ -89,7 +87,6 @@ void pinfo(const string& pid_str) {
     long vm_size_kb = stol(vm_size) * 4;
     
     // Check if process is in foreground
-    string statm_path = "/proc/" + to_string(pid) + "/stat";
     pid_t pgrp = stol(tokens[4]); // Process group ID
     int tty_nr = stol(tokens[6]); // TTY number
     

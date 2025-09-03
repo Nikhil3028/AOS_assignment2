@@ -150,35 +150,23 @@ void ls(const string& arg_line) {
     }
     string saved_dir = cwd;
 
-    // Loop through each dir argument
-    for (size_t d = 0; d < dirs.size(); ++d) {
-        if (dirs[d] != ".") {
+    // Process directory argument
+    for (const string& dir : dirs) {
+        if (dir != ".") {
             // Check if directory exists before trying to access it
             struct stat stat_buf;
-            if (stat(dirs[d].c_str(), &stat_buf) != 0 || !S_ISDIR(stat_buf.st_mode)) {
-                perror(dirs[d].c_str());
+            if (stat(dir.c_str(), &stat_buf) != 0 || !S_ISDIR(stat_buf.st_mode)) {
+                perror(dir.c_str());
                 continue;
             }
 
             // Go into directory using your cd()
-            cd((char*)dirs[d].c_str());
-
-            if (dirs.size() > 1) {
-                cout << dirs[d] << ":" << endl;
-            }
+            cd((char*)dir.c_str());
             print_dir(".", show_all, long_format);
-
             // Restore working directory
             cd((char*)saved_dir.c_str());
         } else {
-            if (dirs.size() > 1) {
-                cout << dirs[d] << ":" << endl;
-            }
             print_dir(".", show_all, long_format);
-        }
-
-        if (dirs.size() > 1 && d + 1 < dirs.size()) {
-            cout << endl;
         }
     }
     

@@ -8,19 +8,26 @@ static const char* builtin_commands[] = {
 // Function to generate command completions
 char* command_generator(const char* text, int state) {
     static int list_index, len;
+    static bool checking_builtins;
     const char* name;
     
     if (!state) {
         list_index = 0;
         len = strlen(text);
+        checking_builtins = true;
     }
     
     // Check built-in commands first
-    while ((name = builtin_commands[list_index])) {
-        list_index++;
-        if (strncmp(name, text, len) == 0) {
-            return strdup(name);
+    if (checking_builtins) {
+        while ((name = builtin_commands[list_index])) {
+            list_index++;
+            if (strncmp(name, text, len) == 0) {
+                return strdup(name);
+            }
         }
+        // Finished with built-ins, switch to system commands
+        checking_builtins = false;
+        list_index = 0;
     }
     
     // Check system commands in PATH
@@ -64,13 +71,8 @@ char* command_generator(const char* text, int state) {
     }
     
     // Search through system commands
-    static size_t sys_index = 0;
-    if (!state) {
-        sys_index = 0;
-    }
-    
-    while (sys_index < system_commands.size()) {
-        const string& cmd = system_commands[sys_index++];
+    while (list_index < (int)system_commands.size()) {
+        const string& cmd = system_commands[list_index++];
         if (strncmp(cmd.c_str(), text, len) == 0) {
             return strdup(cmd.c_str());
         }
@@ -83,6 +85,7 @@ char* command_generator(const char* text, int state) {
 char* filename_generator(const char* text, int state) {
     static DIR* dir = NULL;
     static int len;
+    static char current_dir[PATH_MAX];
     struct dirent* entry;
     
     if (!state) {
@@ -91,12 +94,11 @@ char* filename_generator(const char* text, int state) {
         }
         
         // Get current directory
-        char cwd[PATH_MAX];
-        if (getcwd(cwd, sizeof(cwd)) == NULL) {
+        if (getcwd(current_dir, sizeof(current_dir)) == NULL) {
             return NULL;
         }
         
-        dir = opendir(cwd);
+        dir = opendir(current_dir);
         if (!dir) {
             return NULL;
         }
@@ -105,7 +107,7 @@ char* filename_generator(const char* text, int state) {
     }
     
     while ((entry = readdir(dir)) != NULL) {
-        // Skip hidden files completely (files starting with '.')
+        // Skip all hidden files (files starting with '.')
         if (entry->d_name[0] == '.') {
             continue;
         }
@@ -113,7 +115,8 @@ char* filename_generator(const char* text, int state) {
         if (strncmp(entry->d_name, text, len) == 0) {
             // Check if it's a directory and add '/' suffix
             struct stat file_stat;
-            if (stat(entry->d_name, &file_stat) == 0 && S_ISDIR(file_stat.st_mode)) {
+            string full_path = string(current_dir) + "/" + entry->d_name;
+            if (stat(full_path.c_str(), &file_stat) == 0 && S_ISDIR(file_stat.st_mode)) {
                 string result = string(entry->d_name) + "/";
                 return strdup(result.c_str());
             } else {
@@ -134,11 +137,33 @@ char* filename_generator(const char* text, int state) {
 char** shell_completion(const char* text, int start, int end __attribute__((unused))) {
     char** matches = NULL;
     
-    // If we're at the beginning of the line, complete commands
-    if (start == 0) {
+    // Get the current line to analyze context
+    const char* line = rl_line_buffer;
+    
+    // Check if we're completing the first word (command)
+    // Look for any non-whitespace characters before current position
+    bool is_command = true;
+    for (int i = 0; i < start; i++) {
+        if (line[i] != ' ' && line[i] != '\t') {
+            is_command = false;
+            break;
+        }
+    }
+    
+    // If we're at position 0 or only whitespace before, it's a command
+    // Otherwise, it's a filename/argument
+    if (is_command && start == 0) {
+        // At the very beginning - could be command or filename
+        // Try both command and filename completion
+        matches = rl_completion_matches(text, command_generator);
+        if (!matches) {
+            matches = rl_completion_matches(text, filename_generator);
+        }
+    } else if (is_command) {
+        // After whitespace - complete commands
         matches = rl_completion_matches(text, command_generator);
     } else {
-        // Otherwise, complete filenames
+        // After a command - complete filenames
         matches = rl_completion_matches(text, filename_generator);
     }
     

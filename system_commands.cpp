@@ -69,33 +69,19 @@ void executeSystemCommand(const string& input) {
                 pwd(clean_input);
             }
             else if (command == "ls") {
-                size_t pos = clean_input.find("ls");
-                string rest = (pos != string::npos) ? clean_input.substr(pos + 2) : "";
+                string rest = (clean_input.length() > 2) ? clean_input.substr(2) : "";
                 size_t first = rest.find_first_not_of(" \t");
-                if (first != string::npos) {
-                    rest = rest.substr(first);
-                }
-                else {
-                    rest = "";
-                }
+                rest = (first != string::npos) ? rest.substr(first) : "";
                 ls(rest);
             }
             else if (command == "pinfo") {
-                size_t pos = clean_input.find("pinfo");
-                string rest = (pos != string::npos) ? clean_input.substr(pos + 5) : "";
+                string rest = (clean_input.length() > 5) ? clean_input.substr(5) : "";
                 size_t first = rest.find_first_not_of(" \t");
-                if (first != string::npos) {
-                    rest = rest.substr(first);
-                }
-                else {
-                    rest = "";
-                }
+                rest = (first != string::npos) ? rest.substr(first) : "";
                 pinfo(rest);
             }
             else if (command == "search") {
-                stringstream ss(clean_input);
-                string cmd, filename;
-                ss >> cmd >> filename;
+                string filename = (args.size() > 1) ? args[1] : "";
                 search(filename);
             }
         }

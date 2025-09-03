@@ -115,35 +115,15 @@ int main() {
                 }
             }
             else if (command == "ls") {
-                // Take everything after "ls"
-                size_t pos = current_input.find("ls");
-                string rest = (pos != string::npos) ? current_input.substr(pos + 2) : "";
-
-                // Trim leading spaces
+                string rest = (current_input.length() > 2) ? current_input.substr(2) : "";
                 size_t first = rest.find_first_not_of(" \t");
-                if (first != string::npos) {
-                    rest = rest.substr(first);
-                }
-                else {
-                    rest = "";
-                }
-
+                rest = (first != string::npos) ? rest.substr(first) : "";
                 ls(rest);
             }
             else if (command == "pinfo") {
-                // Take everything after "pinfo"
-                size_t pos = current_input.find("pinfo");
-                string rest = (pos != string::npos) ? current_input.substr(pos + 5) : "";
-
-                // Trim leading spaces
+                string rest = (current_input.length() > 5) ? current_input.substr(5) : "";
                 size_t first = rest.find_first_not_of(" \t");
-                if (first != string::npos) {
-                    rest = rest.substr(first);
-                }
-                else {
-                    rest = "";
-                }
-
+                rest = (first != string::npos) ? rest.substr(first) : "";
                 pinfo(rest);
             }
             else if (command == "search") {

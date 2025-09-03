@@ -65,15 +65,13 @@ void search(const string& filename) {
     
     // If no filename provided, try to read from stdin (for pipeline usage)
     if (clean_filename.empty()) {
-        string line;
         char buffer[1024];
         if (fgets(buffer, sizeof(buffer), stdin)) {
-            line = buffer;
+            clean_filename = buffer;
             // Remove newline if present
-            if (!line.empty() && line.back() == '\n') {
-                line.pop_back();
+            if (!clean_filename.empty() && clean_filename.back() == '\n') {
+                clean_filename.pop_back();
             }
-            clean_filename = line;
         }
         
         if (clean_filename.empty()) {
