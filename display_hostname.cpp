@@ -22,9 +22,9 @@ string display_hostname() {
         launchDir = cwd;
 
         // First prompt → only hostname
-        string prompt = "\033[34m";
+        string prompt = "\001\033[34m\002";
         prompt += (username ? username : "user");
-        prompt += "@" + string(hostname) + ":--> \033[0m";
+        prompt += "@" + string(hostname) + ":--> \001\033[0m\002";
         firstRun = false;
         return prompt;
     }
@@ -43,13 +43,13 @@ string display_hostname() {
         cwdStr.replace(0, string(home).length(), "~");
     }
 
-    string prompt = "\033[34m";
+    string prompt = "\001\033[34m\002";
     prompt += (username ? username : "user");
     prompt += "@" + string(hostname);
 
     // Case 1: if in launch directory → only hostname
     if (string(cwd) == launchDir) {
-        prompt += ":--> \033[0m";
+        prompt += ":--> \001\033[0m\002";
         return prompt;
     }
 
@@ -58,11 +58,11 @@ string display_hostname() {
 
     // cwd: blue if home (~), yellow otherwise
     if (!cwdStr.empty() && cwdStr[0] == '~') {
-        prompt += "\033[34m" + cwdStr;
+        prompt += "\001\033[34m\002" + cwdStr;
     } else {
-        prompt += "\033[33m" + cwdStr;
+        prompt += "\001\033[33m\002" + cwdStr;
     }
 
-    prompt += "\033[34m$ \033[0m";
+    prompt += "\001\033[34m\002$ \001\033[0m\002";
     return prompt;
 }

@@ -97,11 +97,16 @@ void ls(const string& argline) {
     // Parse flags and dirs
     for (const string& t : tokens) {
         if (!t.empty() && t[0] == '-') {
+            if (t.length() == 1) {
+                perror("ls: invalid option -- '-'");
+                return;
+            }
             for (size_t i = 1; i < t.length(); ++i) {
                 if (t[i] == 'a') showAll = true;
                 else if (t[i] == 'l') longFormat = true;
                 else {
-                    cout << "ls: invalid option -- '" << t[i] << "'" << endl;
+                    string error_msg = "ls: invalid option -- '" + string(1, t[i]) + "'";
+                    perror(error_msg.c_str());
                     return;
                 }
             }
@@ -112,7 +117,7 @@ void ls(const string& argline) {
     
     // Check for too many directory arguments
     if (dirs.size() > 1) {
-        cout << "ls: too many arguments" << endl;
+        perror("ls: too many arguments");
         return;
     }
     
