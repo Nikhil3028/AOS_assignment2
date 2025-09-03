@@ -25,6 +25,7 @@ int main() {
     string input;
     
     setup_signal_handlers();
+    initialize_autocomplete();
 
     while (true) {
         string prompt = display_hostname();

@@ -75,5 +75,11 @@ string getPipeOutputFile(const vector<string>& commands, bool& append);
 vector<string> getCleanPipeCommands(const vector<string>& commands);
 void executePipeWithRedirection(const string& input);
 
+// Autocomplete functions
+char* command_generator(const char* text, int state);
+char* filename_generator(const char* text, int state);
+char** shell_completion(const char* text, int start, int end);
+void initialize_autocomplete();
+void display_matches(char** matches, int num_matches, int max_length);
 
 #endif
