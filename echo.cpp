@@ -16,7 +16,7 @@ void echo(const string &input) {
 }
 
 
-void pwd(const string& input) {
+void pwd(const string& ) {
 
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
@@ -31,7 +31,7 @@ void clear_screen() {
 }
 
 void cd(char* path) {
-    static string prev_dir;        // our own OLDPWD (not env var)
+    static string prev_dir;     
     char cwd[PATH_MAX];
 
     // Save current working directory before changing

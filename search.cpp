@@ -43,13 +43,7 @@ bool searchRecursive(const string& currentPath, const string& target) {
         
         struct stat statbuf;
         if (stat(fullPath.c_str(), &statbuf) == 0) {
-            if (S_ISREG(statbuf.st_mode)) {
-                // It's a regular file - search for text content
-                if (searchInFile(fullPath, target)) {
-                    closedir(dir);
-                    return true;
-                }
-            } else if (S_ISDIR(statbuf.st_mode)) {
+            if (S_ISDIR(statbuf.st_mode)) {
                 // It's a directory - search recursively
                 if (searchRecursive(fullPath, target)) {
                     closedir(dir);
@@ -64,18 +58,7 @@ bool searchRecursive(const string& currentPath, const string& target) {
 }
 
 void search(const string& filename) {
-    int saved_stdout = -1;
     string cleanFilename = filename;
-    
-    if (hasRedirection(filename)) {
-        bool append;
-        string outputFile = getOutputFile(filename, append);
-        if (!outputFile.empty()) {
-            saved_stdout = setupOutputRedirection(outputFile, append);
-            if (saved_stdout == -1) return;
-            cleanFilename = getCleanCommand(filename);
-        }
-    }
     
     // If no filename provided, try to read from stdin (for pipeline usage)
     if (cleanFilename.empty()) {
@@ -92,26 +75,18 @@ void search(const string& filename) {
         
         if (cleanFilename.empty()) {
             cout << "Usage: search <filename>" << endl;
-            restoreOutput(saved_stdout);
             return;
         }
     }
     
-    // Get current working directory
+    // Get current working directory and search recursively
     char cwd[1024];
     if (getcwd(cwd, sizeof(cwd)) == nullptr) {
         cout << "Error getting current directory" << endl;
         return;
     }
     
-    // Search recursively from current directory
     bool found = searchRecursive(string(cwd), cleanFilename);
     
-    if (found) {
-        cout << "True" << endl;
-    } else {
-        cout << "False" << endl;
-    }
-    
-    restoreOutput(saved_stdout);
+    cout << (found ? "True" : "False") << endl;
 }

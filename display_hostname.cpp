@@ -27,27 +27,28 @@ string display_hostname() {
         firstRun = false;
     }
 
-    // Build base prompt
-    string prompt = "\001\033[34m\002";
+    // Build base prompt with bold green username@hostname
+    string prompt = "\001\033[1;32m\002";  // Bold green
     prompt += (username ? username : "user");
     prompt += "@" + string(hostname);
+    prompt += "\001\033[0m\002";  // Reset formatting
 
     // If in launch directory → only hostname
     if (cwdStr == launchDir) {
-        prompt += ":--> \001\033[0m\002";
+        prompt += "\001\033[1;37m\002:--> \001\033[0m\002";  // Bold white arrow
         return prompt;
     }
 
     // Otherwise → username@host:cwd
-    prompt += ":";
+    prompt += "\001\033[1;37m\002:\001\033[0m\002";  // Bold white colon
     
     // Add colored directory path
     if (cwdStr[0] == '~') {
-        prompt += "\001\033[34m\002" + cwdStr;  // blue for home
+        prompt += "\001\033[36m\002" + cwdStr;  // cyan for home
     } else {
         prompt += "\001\033[33m\002" + cwdStr;  // yellow for others
     }
 
-    prompt += "\001\033[34m\002--> \001\033[0m\002";
+    prompt += "\001\033[1;37m\002--> \001\033[0m\002";  // Bold white arrow
     return prompt;
 }
