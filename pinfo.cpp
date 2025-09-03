@@ -1,37 +1,40 @@
 #include "Header.h"
 
-void pinfo(const string& pidStr) {
+// Process information command implementation
+void pinfo(const string& pid_str) {
     int saved_stdout = -1;
-    string cleanPidStr = pidStr;
+    string clean_pid_str = pid_str;
     
-    if (hasRedirection(pidStr)) {
+    if (hasRedirection(pid_str)) {
         bool append;
-        string filename = getOutputFile(pidStr, append);
+        string filename = getOutputFile(pid_str, append);
         if (!filename.empty()) {
             saved_stdout = setupOutputRedirection(filename, append);
-            if (saved_stdout == -1) return;
-            cleanPidStr = getCleanCommand(pidStr);
+            if (saved_stdout == -1) {
+                return;
+            }
+            clean_pid_str = getCleanCommand(pid_str);
         }
     }
     
     pid_t pid;
-    if (cleanPidStr.empty()) {
+    if (clean_pid_str.empty()) {
         pid = getpid();
     } else {
         try {
-            pid = stoi(cleanPidStr);
+            pid = stoi(clean_pid_str);
         } catch (const exception&) {
-            cout << "Invalid PID: " << cleanPidStr << endl;
+            cout << "Invalid PID: " << clean_pid_str << endl;
             restoreOutput(saved_stdout);
             return;
         }
     }
     
     // Read process status from /proc/[pid]/stat
-    string statPath = "/proc/" + to_string(pid) + "/stat";
-    FILE* statFile = fopen(statPath.c_str(), "r");
+    string stat_path = "/proc/" + to_string(pid) + "/stat";
+    FILE* stat_file = fopen(stat_path.c_str(), "r");
     
-    if (!statFile) {
+    if (!stat_file) {
         cout << "Process with PID " << pid << " not found" << endl;
         restoreOutput(saved_stdout);
         return;
@@ -39,10 +42,10 @@ void pinfo(const string& pidStr) {
     
     char buffer[1024];
     string line;
-    if (fgets(buffer, sizeof(buffer), statFile) != NULL) {
+    if (fgets(buffer, sizeof(buffer), stat_file) != NULL) {
         line = buffer;
     }
-    fclose(statFile);
+    fclose(stat_file);
     
     // Parse the stat file
     istringstream iss(line);
@@ -50,27 +53,27 @@ void pinfo(const string& pidStr) {
     vector<string> tokens;
     
     // Split by spaces, but handle the command name which can contain spaces and is in parentheses
-    bool inParentheses = false;
-    string currentToken = "";
+    bool in_parentheses = false;
+    string current_token = "";
     
     for (char c : line) {
         if (c == '(') {
-            inParentheses = true;
-            currentToken += c;
+            in_parentheses = true;
+            current_token += c;
         } else if (c == ')') {
-            inParentheses = false;
-            currentToken += c;
-        } else if (c == ' ' && !inParentheses) {
-            if (!currentToken.empty()) {
-                tokens.push_back(currentToken);
-                currentToken = "";
+            in_parentheses = false;
+            current_token += c;
+        } else if (c == ' ' && !in_parentheses) {
+            if (!current_token.empty()) {
+                tokens.push_back(current_token);
+                current_token = "";
             }
         } else {
-            currentToken += c;
+            current_token += c;
         }
     }
-    if (!currentToken.empty()) {
-        tokens.push_back(currentToken);
+    if (!current_token.empty()) {
+        tokens.push_back(current_token);
     }
     
     if (tokens.size() < 23) {
@@ -80,47 +83,47 @@ void pinfo(const string& pidStr) {
     
     // Extract information
     char status = tokens[2][0]; // Process state
-    string vmSize = tokens[22]; // Virtual memory size in pages
+    string vm_size = tokens[22]; // Virtual memory size in pages
     
     // Convert VM size from pages to KB (assuming 4KB pages)
-    long vmSizeKB = stol(vmSize) * 4;
+    long vm_size_kb = stol(vm_size) * 4;
     
     // Check if process is in foreground
-    string statmPath = "/proc/" + to_string(pid) + "/stat";
+    string statm_path = "/proc/" + to_string(pid) + "/stat";
     pid_t pgrp = stol(tokens[4]); // Process group ID
     int tty_nr = stol(tokens[6]); // TTY number
     
     // Check if process is in foreground by comparing process group with terminal foreground process group
-    bool isForeground = false;
+    bool is_foreground = false;
     if (tty_nr > 0) {
         // Get the foreground process group of the terminal
         pid_t fg_pgrp = tcgetpgrp(STDIN_FILENO);
         if (fg_pgrp == pgrp) {
-            isForeground = true;
+            is_foreground = true;
         }
     }
     
     // Get executable path from /proc/[pid]/exe
-    string exePath = "/proc/" + to_string(pid) + "/exe";
-    char executablePath[PATH_MAX];
-    ssize_t len = readlink(exePath.c_str(), executablePath, sizeof(executablePath) - 1);
+    string exe_path = "/proc/" + to_string(pid) + "/exe";
+    char executable_path[PATH_MAX];
+    ssize_t len = readlink(exe_path.c_str(), executable_path, sizeof(executable_path) - 1);
     
-    string execPath;
+    string exec_path;
     if (len != -1) {
-        executablePath[len] = '\0';
-        execPath = string(executablePath);
+        executable_path[len] = '\0';
+        exec_path = string(executable_path);
     } else {
-        execPath = "N/A";
+        exec_path = "N/A";
     }
     
     // Format and display the output
     cout << "Process Status -- ";
     switch (status) {
         case 'R':
-            cout << (isForeground ? "R+" : "R");
+            cout << (is_foreground ? "R+" : "R");
             break;
         case 'S':
-            cout << (isForeground ? "S+" : "S");
+            cout << (is_foreground ? "S+" : "S");
             break;
         case 'Z':
             cout << "Z";
@@ -129,13 +132,13 @@ void pinfo(const string& pidStr) {
             cout << "T";
             break;
         default:
-            cout << status << (isForeground ? "+" : "");
+            cout << status << (is_foreground ? "+" : "");
             break;
     }
     cout << endl;
     
-    cout << "memory -- " << vmSizeKB << " {Virtual Memory}" << endl;
-    cout << "Executable Path -- " << execPath << endl;
+    cout << "memory -- " << vm_size_kb << " {Virtual Memory}" << endl;
+    cout << "Executable Path -- " << exec_path << endl;
     
     restoreOutput(saved_stdout);
 }

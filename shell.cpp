@@ -1,6 +1,6 @@
 #include "Header.h"
 
-// Minimal tokenize function
+// Minimal tokenize function for command separation
 void tokenize(const string& input, string commands[], int& count) {
     count = 0;
     string cmd = "";
@@ -21,6 +21,7 @@ void tokenize(const string& input, string commands[], int& count) {
     }
 }
 
+// Main shell loop
 int main() {
     string input;
     
@@ -46,40 +47,44 @@ int main() {
         
         free(line);
 
-        if (input.empty()) continue;
+        if (input.empty()) {
+            continue;
+        }
 
         // Tokenize input by semicolons
         string commands[100];
-        int commandCount;
-        tokenize(input, commands, commandCount);
+        int command_count;
+        tokenize(input, commands, command_count);
 
     
-        for (int i = 0; i < commandCount; i++) {
-            string currentInput = commands[i];
+        for (int i = 0; i < command_count; i++) {
+            string current_input = commands[i];
             
             // Check if command contains both pipe and redirection
-            if (hasPipeAndRedirection(currentInput)) {
-                executePipeWithRedirection(currentInput);
+            if (hasPipeAndRedirection(current_input)) {
+                executePipeWithRedirection(current_input);
                 continue;
             }
             
             // Check if command contains pipe only
-            if (hasPipe(currentInput)) {
-                executePipeline(currentInput);
+            if (hasPipe(current_input)) {
+                executePipeline(current_input);
                 continue;
             }
             
             // Check if command contains redirection only
-            if (hasRedirection(currentInput)) {
-                executeSystemCommand(currentInput);
+            if (hasRedirection(current_input)) {
+                executeSystemCommand(current_input);
                 continue;
             }
             
             char buffer[1024];
-            strcpy(buffer, currentInput.c_str());
+            strcpy(buffer, current_input.c_str());
 
             char* token = strtok(buffer, " \t");
-            if (!token) continue;
+            if (!token) {
+                continue;
+            }
 
             string command = token;
 
@@ -89,13 +94,13 @@ int main() {
                 return 0;
             }
             else if (command == "history") {
-                handleHistoryCommand(currentInput);
+                handleHistoryCommand(current_input);
             }
             else if (command == "echo") {
-                echo(currentInput);
+                echo(current_input);
             }
             else if (command == "pwd") {
-                pwd(currentInput);
+                pwd(current_input);
             }
             else if (command == "clear") {
                 clear_screen();
@@ -110,26 +115,34 @@ int main() {
                 }
             }
             else if (command == "ls") {
-                // take everything after "ls"
-                size_t pos = currentInput.find("ls");
-                string rest = (pos != string::npos) ? currentInput.substr(pos + 2) : "";
+                // Take everything after "ls"
+                size_t pos = current_input.find("ls");
+                string rest = (pos != string::npos) ? current_input.substr(pos + 2) : "";
 
-                // trim leading spaces
+                // Trim leading spaces
                 size_t first = rest.find_first_not_of(" \t");
-                if (first != string::npos) rest = rest.substr(first);
-                else rest = "";
+                if (first != string::npos) {
+                    rest = rest.substr(first);
+                }
+                else {
+                    rest = "";
+                }
 
                 ls(rest);
             }
             else if (command == "pinfo") {
-                // take everything after "pinfo"
-                size_t pos = currentInput.find("pinfo");
-                string rest = (pos != string::npos) ? currentInput.substr(pos + 5) : "";
+                // Take everything after "pinfo"
+                size_t pos = current_input.find("pinfo");
+                string rest = (pos != string::npos) ? current_input.substr(pos + 5) : "";
 
-                // trim leading spaces
+                // Trim leading spaces
                 size_t first = rest.find_first_not_of(" \t");
-                if (first != string::npos) rest = rest.substr(first);
-                else rest = "";
+                if (first != string::npos) {
+                    rest = rest.substr(first);
+                }
+                else {
+                    rest = "";
+                }
 
                 pinfo(rest);
             }
@@ -139,12 +152,12 @@ int main() {
                 if (extra) {
                     cout << "search: too many arguments" << endl;
                 } else {
-                    string filenameStr = filename ? string(filename) : "";
-                    search(filenameStr);
+                    string filename_str = filename ? string(filename) : "";
+                    search(filename_str);
                 }
             }
             else {
-                executeSystemCommand(currentInput);
+                executeSystemCommand(current_input);
             }
         }
     }

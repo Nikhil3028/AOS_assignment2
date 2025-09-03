@@ -1,9 +1,11 @@
 #include "Header.h"
 
+// Check if input contains redirection operators
 bool hasRedirection(const string& input) {
     return input.find(">") != string::npos || input.find("<") != string::npos;
 }
 
+// Get output file from redirection
 string getOutputFile(const string& input, bool& append) {
     size_t pos = input.find(">>");
     if (pos != string::npos) {
@@ -24,6 +26,7 @@ string getOutputFile(const string& input, bool& append) {
     return "";
 }
 
+// Get input file from redirection
 string getInputFile(const string& input) {
     size_t pos = input.find("<");
     if (pos != string::npos) {
@@ -37,6 +40,7 @@ string getInputFile(const string& input) {
     return "";
 }
 
+// Get clean command without redirection operators
 string getCleanCommand(const string& input) {
     string clean = input;
     
@@ -56,6 +60,7 @@ string getCleanCommand(const string& input) {
     return (last != string::npos) ? clean.substr(0, last + 1) : "";
 }
 
+// Setup output redirection
 int setupOutputRedirection(const string& filename, bool append) {
     int fd = open(filename.c_str(), O_WRONLY | O_CREAT | (append ? O_APPEND : O_TRUNC), 0644);
     if (fd == -1) {
@@ -74,6 +79,7 @@ int setupOutputRedirection(const string& filename, bool append) {
     return saved_stdout;
 }
 
+// Setup input redirection
 int setupInputRedirection(const string& filename) {
     int fd = open(filename.c_str(), O_RDONLY);
     if (fd == -1) {
@@ -92,6 +98,7 @@ int setupInputRedirection(const string& filename) {
     return saved_stdin;
 }
 
+// Restore input redirection
 void restoreInput(int saved_stdin) {
     if (saved_stdin != -1) {
         dup2(saved_stdin, STDIN_FILENO);
@@ -99,6 +106,7 @@ void restoreInput(int saved_stdin) {
     }
 }
 
+// Restore output redirection
 void restoreOutput(int saved_stdout) {
     if (saved_stdout != -1) {
         dup2(saved_stdout, STDOUT_FILENO);

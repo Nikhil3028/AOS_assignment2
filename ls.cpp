@@ -1,6 +1,6 @@
 #include "Header.h"
 
-// Prints ls -l permissions
+// Print ls -l permissions
 void print_permissions(mode_t mode) {
     cout << (S_ISDIR(mode) ? 'd' : (S_ISLNK(mode) ? 'l' : '-'));
     cout << ((mode & S_IRUSR) ? 'r' : '-');
@@ -14,30 +14,34 @@ void print_permissions(mode_t mode) {
     cout << ((mode & S_IXOTH) ? 'x' : '-');
 }
 
-// Prints a single directory with flags
-void print_dir(const string& dirPath, bool showAll, bool longFormat) {
-    DIR* dir = opendir(dirPath.c_str());
+// Print a single directory with flags
+void print_dir(const string& dir_path, bool show_all, bool long_format) {
+    DIR* dir = opendir(dir_path.c_str());
     if (!dir) {
-        perror(dirPath.c_str());
+        perror(dir_path.c_str());
         return;
     }
     vector<string> files;
 
     struct dirent* entry;
     while ((entry = readdir(dir)) != NULL) {
-        string fname = entry->d_name;
-        if (!showAll && fname[0] == '.') continue; // skip hidden if not -a
-        files.push_back(fname);
+        string file_name = entry->d_name;
+        if (!show_all && file_name[0] == '.') {
+            continue; // Skip hidden if not -a
+        }
+        files.push_back(file_name);
     }
     closedir(dir);
 
     sort(files.begin(), files.end());
 
-    for (const string& fname : files) {
+    for (const string& file_name : files) {
         struct stat st;
-        if (stat(fname.c_str(), &st) != 0) continue;
+        if (stat(file_name.c_str(), &st) != 0) {
+            continue;
+        }
 
-        if (longFormat) {
+        if (long_format) {
             print_permissions(st.st_mode);
             cout << ' ' << setw(2) << st.st_nlink << ' ';
             struct passwd* pw = getpwuid(st.st_uid);
@@ -49,49 +53,59 @@ void print_dir(const string& dirPath, bool showAll, bool longFormat) {
             struct tm* mtm = localtime(&st.st_mtime);
             strftime(timebuf, sizeof(timebuf), "%b %d %H:%M", mtm);
             cout << timebuf << ' ';
-            if (S_ISDIR(st.st_mode))
-                cout << "\033[31m" << fname << "\033[0m";
-            else
-                cout << fname;
+            if (S_ISDIR(st.st_mode)) {
+                cout << "\033[31m" << file_name << "\033[0m";
+            }
+            else {
+                cout << file_name;
+            }
             cout << endl;
         } else {
             // Check if stdout is a pipe (not a terminal)
             if (!isatty(STDOUT_FILENO)) {
                 // Output one file per line for pipes
-                cout << fname << endl;
+                cout << file_name << endl;
             } else {
                 // Normal terminal output with spaces
-                if (S_ISDIR(st.st_mode))
-                    cout << "\033[31m" << fname << "\033[0m ";
-                else
-                    cout << fname << " ";
+                if (S_ISDIR(st.st_mode)) {
+                    cout << "\033[31m" << file_name << "\033[0m ";
+                }
+                else {
+                    cout << file_name << "  ";
+                }
             }
         }
     }
-    if (!longFormat && isatty(STDOUT_FILENO)) cout << endl;
+    if (!long_format && isatty(STDOUT_FILENO)) {
+        cout << endl;
+    }
 }
 
 // Main ls dispatcher: pass argument string after "ls" (e.g., "-la dir1 dir2")
-void ls(const string& argline) {
+void ls(const string& arg_line) {
     int saved_stdout = -1;
-    string cleanArgline = argline;
+    string clean_arg_line = arg_line;
     
-    if (hasRedirection(argline)) {
+    if (hasRedirection(arg_line)) {
         bool append;
-        string filename = getOutputFile(argline, append);
+        string filename = getOutputFile(arg_line, append);
         if (!filename.empty()) {
             saved_stdout = setupOutputRedirection(filename, append);
-            if (saved_stdout == -1) return;
-            cleanArgline = getCleanCommand(argline);
+            if (saved_stdout == -1) {
+                return;
+            }
+            clean_arg_line = getCleanCommand(arg_line);
         }
     }
     
     vector<string> tokens;
-    stringstream ss(cleanArgline);
+    stringstream ss(clean_arg_line);
     string tok;
-    while (ss >> tok) tokens.push_back(tok);
+    while (ss >> tok) {
+        tokens.push_back(tok);
+    }
 
-    bool showAll = false, longFormat = false;
+    bool show_all = false, long_format = false;
     vector<string> dirs;
 
     // Parse flags and dirs
@@ -102,8 +116,12 @@ void ls(const string& argline) {
                 return;
             }
             for (size_t i = 1; i < t.length(); ++i) {
-                if (t[i] == 'a') showAll = true;
-                else if (t[i] == 'l') longFormat = true;
+                if (t[i] == 'a') {
+                    show_all = true;
+                }
+                else if (t[i] == 'l') {
+                    long_format = true;
+                }
                 else {
                     cout << "ls: invalid option -- '" << t[i] << "'" << endl;
                     return;
@@ -120,7 +138,9 @@ void ls(const string& argline) {
         return;
     }
     
-    if (dirs.empty()) dirs.push_back(".");
+    if (dirs.empty()) {
+        dirs.push_back(".");
+    }
 
     // Save current working directory
     char cwd[PATH_MAX];
@@ -128,33 +148,38 @@ void ls(const string& argline) {
         perror("getcwd");
         return;
     }
-    string savedDir = cwd;
+    string saved_dir = cwd;
 
     // Loop through each dir argument
     for (size_t d = 0; d < dirs.size(); ++d) {
         if (dirs[d] != ".") {
             // Check if directory exists before trying to access it
-            struct stat statbuf;
-            if (stat(dirs[d].c_str(), &statbuf) != 0 || !S_ISDIR(statbuf.st_mode)) {
+            struct stat stat_buf;
+            if (stat(dirs[d].c_str(), &stat_buf) != 0 || !S_ISDIR(stat_buf.st_mode)) {
                 perror(dirs[d].c_str());
                 continue;
             }
 
-            // go into directory using your cd()
+            // Go into directory using your cd()
             cd((char*)dirs[d].c_str());
 
-            if (dirs.size() > 1) cout << dirs[d] << ":" << endl;
-            print_dir(".", showAll, longFormat);
+            if (dirs.size() > 1) {
+                cout << dirs[d] << ":" << endl;
+            }
+            print_dir(".", show_all, long_format);
 
-            // restore working directory
-            cd((char*)savedDir.c_str());
+            // Restore working directory
+            cd((char*)saved_dir.c_str());
         } else {
-            if (dirs.size() > 1) cout << dirs[d] << ":" << endl;
-            print_dir(".", showAll, longFormat);
+            if (dirs.size() > 1) {
+                cout << dirs[d] << ":" << endl;
+            }
+            print_dir(".", show_all, long_format);
         }
 
-        if (dirs.size() > 1 && d + 1 < dirs.size())
+        if (dirs.size() > 1 && d + 1 < dirs.size()) {
             cout << endl;
+        }
     }
     
     restoreOutput(saved_stdout);

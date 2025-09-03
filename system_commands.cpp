@@ -1,18 +1,19 @@
 #include "Header.h"
 
+// Execute system command with background support
 void executeSystemCommand(const string& input) {
-    bool isBackground = false;
-    string cleanInput = input;
+    bool is_background = false;
+    string clean_input = input;
     
     // Check if ends with &
-    size_t last = cleanInput.find_last_not_of(" \t");
-    if (last != string::npos && cleanInput[last] == '&') {
-        isBackground = true;
-        cleanInput = cleanInput.substr(0, last);
-        // trim trailing spaces after removing &
-        size_t newLast = cleanInput.find_last_not_of(" \t");
-        if (newLast != string::npos) {
-            cleanInput = cleanInput.substr(0, newLast + 1);
+    size_t last = clean_input.find_last_not_of(" \t");
+    if (last != string::npos && clean_input[last] == '&') {
+        is_background = true;
+        clean_input = clean_input.substr(0, last);
+        // Trim trailing spaces after removing &
+        size_t new_last = clean_input.find_last_not_of(" \t");
+        if (new_last != string::npos) {
+            clean_input = clean_input.substr(0, new_last + 1);
         }
     }
     
@@ -20,32 +21,36 @@ void executeSystemCommand(const string& input) {
     int saved_stdout = -1;
     int saved_stdin = -1;
     
-    if (hasRedirection(cleanInput)) {
+    if (hasRedirection(clean_input)) {
         // Handle output redirection
         bool append = false;
-        string outputFile = getOutputFile(cleanInput, append);
-        if (!outputFile.empty()) {
-            saved_stdout = setupOutputRedirection(outputFile, append);
-            if (saved_stdout == -1) return;
+        string output_file = getOutputFile(clean_input, append);
+        if (!output_file.empty()) {
+            saved_stdout = setupOutputRedirection(output_file, append);
+            if (saved_stdout == -1) {
+                return;
+            }
         }
         
         // Handle input redirection
-        string inputFile = getInputFile(cleanInput);
-        if (!inputFile.empty()) {
-            saved_stdin = setupInputRedirection(inputFile);
+        string input_file = getInputFile(clean_input);
+        if (!input_file.empty()) {
+            saved_stdin = setupInputRedirection(input_file);
             if (saved_stdin == -1) {
-                if (saved_stdout != -1) restoreOutput(saved_stdout);
+                if (saved_stdout != -1) {
+                    restoreOutput(saved_stdout);
+                }
                 return;
             }
         }
         
         // Get clean command without redirection
-        cleanInput = getCleanCommand(cleanInput);
+        clean_input = getCleanCommand(clean_input);
     }
     
     // Parse command and arguments
     vector<string> args;
-    stringstream ss(cleanInput);
+    stringstream ss(clean_input);
     string arg;
     while (ss >> arg) {
         args.push_back(arg);
@@ -58,29 +63,37 @@ void executeSystemCommand(const string& input) {
         if (isInternalCommand(command)) {
             // Execute internal command directly (no fork needed for internal commands)
             if (command == "echo") {
-                echo(cleanInput);
+                echo(clean_input);
             }
             else if (command == "pwd") {
-                pwd(cleanInput);
+                pwd(clean_input);
             }
             else if (command == "ls") {
-                size_t pos = cleanInput.find("ls");
-                string rest = (pos != string::npos) ? cleanInput.substr(pos + 2) : "";
+                size_t pos = clean_input.find("ls");
+                string rest = (pos != string::npos) ? clean_input.substr(pos + 2) : "";
                 size_t first = rest.find_first_not_of(" \t");
-                if (first != string::npos) rest = rest.substr(first);
-                else rest = "";
+                if (first != string::npos) {
+                    rest = rest.substr(first);
+                }
+                else {
+                    rest = "";
+                }
                 ls(rest);
             }
             else if (command == "pinfo") {
-                size_t pos = cleanInput.find("pinfo");
-                string rest = (pos != string::npos) ? cleanInput.substr(pos + 5) : "";
+                size_t pos = clean_input.find("pinfo");
+                string rest = (pos != string::npos) ? clean_input.substr(pos + 5) : "";
                 size_t first = rest.find_first_not_of(" \t");
-                if (first != string::npos) rest = rest.substr(first);
-                else rest = "";
+                if (first != string::npos) {
+                    rest = rest.substr(first);
+                }
+                else {
+                    rest = "";
+                }
                 pinfo(rest);
             }
             else if (command == "search") {
-                stringstream ss(cleanInput);
+                stringstream ss(clean_input);
                 string cmd, filename;
                 ss >> cmd >> filename;
                 search(filename);
@@ -98,7 +111,7 @@ void executeSystemCommand(const string& input) {
             pid_t pid = fork();
             if (pid == 0) {
                 // Child process
-                if (isBackground) {
+                if (is_background) {
                     // Redirect all I/O to /dev/null for background processes
                     int devnull_out = open("/dev/null", O_WRONLY);
                     if (devnull_out != -1) {
@@ -113,10 +126,10 @@ void executeSystemCommand(const string& input) {
                     }
                 }
                 execvp(argv[0], argv.data());
-                perror(argv[0]);
-                exit(1);
+                cout << argv[0] << ": command not found" << endl;
+                exit(127);
             } else if (pid > 0) {
-                if (isBackground) {
+                if (is_background) {
                     cout << "[" << pid << "]" << endl;
                 } else {
                     set_foreground_process(pid);
@@ -136,6 +149,10 @@ void executeSystemCommand(const string& input) {
     }
     
     // Restore redirections
-    if (saved_stdout != -1) restoreOutput(saved_stdout);
-    if (saved_stdin != -1) restoreInput(saved_stdin);
+    if (saved_stdout != -1) {
+        restoreOutput(saved_stdout);
+    }
+    if (saved_stdin != -1) {
+        restoreInput(saved_stdin);
+    }
 }
