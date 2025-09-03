@@ -1,8 +1,8 @@
 #include "Header.h"
 
 string display_hostname() {
-    static bool firstRun = true;      // track first execution
-    static string launchDir;          // store directory where program started
+    static bool firstRun = true;
+    static string launchDir;
 
     char hostname[1024];
     char cwd[PATH_MAX];
@@ -10,59 +10,44 @@ string display_hostname() {
 
     if (gethostname(hostname, sizeof(hostname)) != 0) {
         perror("gethostname");
-        return "$ ";
-    }
-
-    if (firstRun) {
-        // Capture launch directory on first run
-        if (getcwd(cwd, sizeof(cwd)) == NULL) {
-            perror("getcwd");
-            return "$ ";
-        }
-        launchDir = cwd;
-
-        // First prompt → only hostname
-        string prompt = "\001\033[34m\002";
-        prompt += (username ? username : "user");
-        prompt += "@" + string(hostname) + ":--> \001\033[0m\002";
-        firstRun = false;
-        return prompt;
+        return ":-->";
     }
 
     // Get current working directory
     if (getcwd(cwd, sizeof(cwd)) == NULL) {
         perror("getcwd");
-        return "$ ";
+        return ":-->";
     }
 
     string cwdStr = cwd;
-    const char* home = getenv("HOME");
-
-    // Replace /home/<user> with ~
-    if (home && cwdStr.find(home) == 0) {
-        cwdStr.replace(0, string(home).length(), "~");
+    
+    // Capture launch directory on first run
+    if (firstRun) {
+        launchDir = cwdStr;
+        firstRun = false;
     }
 
+    // Build base prompt
     string prompt = "\001\033[34m\002";
     prompt += (username ? username : "user");
     prompt += "@" + string(hostname);
 
-    // Case 1: if in launch directory → only hostname
-    if (string(cwd) == launchDir) {
+    // If in launch directory → only hostname
+    if (cwdStr == launchDir) {
         prompt += ":--> \001\033[0m\002";
         return prompt;
     }
 
-    // Case 2: otherwise → username@host:cwd
+    // Otherwise → username@host:cwd
     prompt += ":";
-
-    // cwd: blue if home (~), yellow otherwise
-    if (!cwdStr.empty() && cwdStr[0] == '~') {
-        prompt += "\001\033[34m\002" + cwdStr;
+    
+    // Add colored directory path
+    if (cwdStr[0] == '~') {
+        prompt += "\001\033[34m\002" + cwdStr;  // blue for home
     } else {
-        prompt += "\001\033[33m\002" + cwdStr;
+        prompt += "\001\033[33m\002" + cwdStr;  // yellow for others
     }
 
-    prompt += "\001\033[34m\002$ \001\033[0m\002";
+    prompt += "\001\033[34m\002--> \001\033[0m\002";
     return prompt;
 }

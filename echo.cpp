@@ -1,19 +1,8 @@
 #include "Header.h"
 
 void echo(const string &input) {
-    int saved_stdout = -1;
     string cleanInput = input;
-    
-    if (hasRedirection(input)) {
-        bool append;
-        string filename = getOutputFile(input, append);
-        if (!filename.empty()) {
-            saved_stdout = setupOutputRedirection(filename, append);
-            if (saved_stdout == -1) return;
-            cleanInput = getCleanCommand(input);
-        }
-    }
-    
+       
     string text = cleanInput.substr(4); // Remove "echo"
     
     // trim leading spaces
@@ -23,30 +12,18 @@ void echo(const string &input) {
     cout << text << endl;
     cout.flush();
     
-    restoreOutput(saved_stdout);
+
 }
 
 
 void pwd(const string& input) {
-    int saved_stdout = -1;
-    
-    if (hasRedirection(input)) {
-        bool append;
-        string filename = getOutputFile(input, append);
-        if (!filename.empty()) {
-            saved_stdout = setupOutputRedirection(filename, append);
-            if (saved_stdout == -1) return;
-        }
-    }
-    
+
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
         cout << cwd << endl;
     } else {
         perror("pwd");
     }
-    
-    restoreOutput(saved_stdout);
 }
 
 void clear_screen() {
@@ -54,30 +31,67 @@ void clear_screen() {
 }
 
 void cd(char* path) {
-    static string oldpwd;
+    static string prev_dir;        // our own OLDPWD (not env var)
     char cwd[PATH_MAX];
-    if (!getcwd(cwd, sizeof(cwd))) { perror("getcwd"); return; }
 
-    if (!path || !strcmp(path, "~")) {
-        if (chdir(getenv("HOME"))) perror("cd");
-    } 
-    else if (!strcmp(path, "-")) {
-        if (oldpwd.empty()) cerr << "cd: OLDPWD not set\n";
-        else if (chdir(oldpwd.c_str())) perror("cd");
-        else cout << oldpwd << '\n';
-    } 
-    else if (chdir(path)) {
-        const char* home = getenv("HOME");
-        if (home) {
-            string full = string(home) + "/" + path;
-            if (chdir(full.c_str())) {
-                if (access(path, F_OK) && access(full.c_str(), F_OK))
-                    cout << "cd: " << path << " No such file or directory\n";
-                else if (access(path, X_OK))
-                    cout << "cd: " << path << "Permission denied\n";
-                else perror("cd");
-            }
-        }
+    // Save current working directory before changing
+    if (!getcwd(cwd, sizeof(cwd))) {
+        perror("getcwd");
+        return;
     }
-    oldpwd = cwd;
+    string current_dir = cwd;
+    string target;
+
+    // Case 1: no argument → go to home
+    if (!path || strlen(path) == 0) {
+        char* home = getenv("HOME");
+        if (!home) {
+            cerr << "cd: HOME not set\n";
+            return;
+        }
+        target = home;
+    }
+    // Case 2: cd -
+    else if (strcmp(path, "-") == 0) {
+        if (prev_dir.empty()) {
+            cerr << "cd: OLDPWD not set\n";
+            return;
+        }
+        target = prev_dir;
+        cout << prev_dir << "\n";   // print the path like bash
+    }
+    // Case 3: cd ~ or cd ~/subdir
+    else if (path[0] == '~') {
+        char* home = getenv("HOME");
+        if (!home) {
+            cerr << "cd: HOME not set\n";
+            return;
+        }
+        target = string(home) + string(path + 1);
+    }
+    // Case 4: cd . or cd ..
+    else if (strcmp(path, ".") == 0) {
+        target = current_dir;   // stay in same place
+    }
+    else if (strcmp(path, "..") == 0) {
+        target = current_dir + "/..";  // parent directory
+    }
+    // Case 5: normal path
+    else {
+        target = path;
+    }
+
+    // Attempt to change directory
+    if (chdir(target.c_str()) != 0) {
+        if (errno == EACCES)
+            cerr << "cd: permission denied: " << target << "\n";
+        else if (errno == ENOENT)
+            cerr << "cd: no such file or directory: " << target << "\n";
+        else
+            perror("cd");
+        return;
+    }
+
+    // Update prev_dir only on success
+    prev_dir = current_dir;
 }
