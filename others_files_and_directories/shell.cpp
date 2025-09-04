@@ -1,6 +1,6 @@
 #include "Header.h"
 
-// Minimal tokenize function for command separation
+//tokenize function for command separation
 void tokenize(const string& input, string commands[], int& count) {
     count = 0;
     string cmd = "";
@@ -21,7 +21,7 @@ void tokenize(const string& input, string commands[], int& count) {
     }
 }
 
-// Main shell loop
+//Main shell loop
 int main() {
     string input;
     
@@ -40,7 +40,7 @@ int main() {
         
         input = line;
         
-        // Add to custom history if not empty
+        // Add to history if not empty
         if (!input.empty()) {
             addToHistory(input);
         }

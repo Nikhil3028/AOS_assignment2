@@ -81,7 +81,7 @@ void print_dir(const string& dir_path, bool show_all, bool long_format) {
     }
 }
 
-// Main ls dispatcher: pass argument string after "ls" (e.g., "-la dir1 dir2")
+
 void ls(const string& arg_line) {
     int saved_stdout = -1;
     string clean_arg_line = arg_line;
