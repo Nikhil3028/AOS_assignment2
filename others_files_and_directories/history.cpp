@@ -19,17 +19,31 @@ string getHistoryFilePath() {
 // Load history from file
 void loadHistory() {
     string historyFile = getHistoryFilePath();
-    ifstream file(historyFile);
-    string line;
-    
+    FILE* fp = fopen(historyFile.c_str(), "r");
     command_history.clear();
-    
-    while (getline(file, line)) {
-        if (!line.empty()) {
-            command_history.push_back(line);
+    if (!fp) {
+        // It's okay if the file doesn't exist yet; just start with empty history
+        // perror("fopen history read"); // Uncomment if you want to log this
+    } else {
+        char buffer[4096];
+        while (fgets(buffer, sizeof(buffer), fp)) {
+            // Strip trailing newline if present
+            size_t len = strlen(buffer);
+            if (len > 0 && (buffer[len - 1] == '\n' || buffer[len - 1] == '\r')) {
+                while (len > 0 && (buffer[len - 1] == '\n' || buffer[len - 1] == '\r')) {
+                    buffer[--len] = '\0';
+                }
+            }
+            if (len > 0) {
+                command_history.push_back(string(buffer));
+                // Keep only the most recent MAX_HISTORY entries
+                if (command_history.size() > MAX_HISTORY) {
+                    command_history.erase(command_history.begin());
+                }
+            }
         }
+        fclose(fp);
     }
-    file.close();
     
     // Load into readline history as well
     clear_history();
@@ -41,12 +55,20 @@ void loadHistory() {
 // Save history to file
 void saveHistory() {
     string historyFile = getHistoryFilePath();
-    ofstream file(historyFile);
-    
-    for (const string& cmd : command_history) {
-        file << cmd << endl;
+    FILE* fp = fopen(historyFile.c_str(), "w");
+    if (!fp) {
+        perror("fopen history write");
+        return;
     }
-    file.close();
+    for (const string& cmd : command_history) {
+        if (fprintf(fp, "%s\n", cmd.c_str()) < 0) {
+            perror("fprintf history");
+            // continue attempting to write remaining lines
+        }
+    }
+    if (fclose(fp) != 0) {
+        perror("fclose history");
+    }
 }
 
 // Add command to history
