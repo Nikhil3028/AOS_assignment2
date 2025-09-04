@@ -28,7 +28,11 @@
 
 using namespace std;
 
+// SHELL DISPLAY AND PROMPT FUNCTIONS
 string display_hostname();
+void clear_screen();
+
+// BUILT-IN COMMAND FUNCTIONS
 void echo(const string &input);
 void pwd(const string& input = "");
 void cd(char* path);
@@ -37,12 +41,16 @@ void print_dir(const string& dirPath, bool showAll, bool longFormat);
 void print_permissions(mode_t mode);
 void pinfo(const string& pidStr);
 void search(const string& filename);
-void clear_screen();
+
+// SYSTEM COMMAND EXECUTION FUNCTION
+void executeSystemCommand(const string& input);
+
+// SIGNAL HANDLING FUNCTION
 void setup_signal_handlers();
 void set_foreground_process(pid_t pid);
 void handle_ctrl_d();
 
-// Redirection functions
+// I/O REDIRECTION FUNCTION
 bool hasRedirection(const string& input);
 string getOutputFile(const string& input, bool& append);
 string getInputFile(const string& input);
@@ -52,11 +60,7 @@ int setupInputRedirection(const string& filename);
 void restoreOutput(int saved_stdout);
 void restoreInput(int saved_stdin);
 
-
-// System command functions
-void executeSystemCommand(const string& input);
-
-// Pipeline functions
+// PIPELINE FUNCTION
 bool hasPipe(const string& input);
 void executePipeline(const string& input);
 void executePipe(const vector<string>& commands);
@@ -66,7 +70,7 @@ vector<string> splitPipe(const string& input);
 void executeInternalCommand(const string& cmdStr, int inputFd, int outputFd);
 void executeExternalCommand(const string& cmdStr, int inputFd, int outputFd);
 
-// Pipeline with redirection functions
+// PIPELINE WITH REDIRECTION FUNCTION
 bool hasPipeAndRedirection(const string& input);
 bool pipeHasInputRedirection(const vector<string>& commands);
 bool pipeHasOutputRedirection(const vector<string>& commands);
@@ -75,14 +79,14 @@ string getPipeOutputFile(const vector<string>& commands, bool& append);
 vector<string> getCleanPipeCommands(const vector<string>& commands);
 void executePipeWithRedirection(const string& input);
 
-// Autocomplete functions
+// AUTOCOMPLETE FUNCTION
 char* command_generator(const char* text, int state);
 char* filename_generator(const char* text, int state);
 char** shell_completion(const char* text, int start, int end);
 void initialize_autocomplete();
 void display_matches(char** matches, int num_matches, int max_length);
 
-// History functions
+// HISTORY FUNCTION
 void initializeHistory();
 void addToHistory(const string& command);
 void handleHistoryCommand(const string& input);

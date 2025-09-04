@@ -12,7 +12,11 @@ string getOutputFile(const string& input, bool& append) {
         append = true;
         string filename = input.substr(pos + 2);
         size_t first = filename.find_first_not_of(" \t");
-        return (first != string::npos) ? filename.substr(first) : "";
+        if (first != string::npos) {
+            size_t last = filename.find_last_not_of(" \t\n\r");
+            return filename.substr(first, last - first + 1);
+        }
+        return "";
     }
     
     pos = input.find(">");
@@ -20,7 +24,11 @@ string getOutputFile(const string& input, bool& append) {
         append = false;
         string filename = input.substr(pos + 1);
         size_t first = filename.find_first_not_of(" \t");
-        return (first != string::npos) ? filename.substr(first) : "";
+        if (first != string::npos) {
+            size_t last = filename.find_last_not_of(" \t\n\r");
+            return filename.substr(first, last - first + 1);
+        }
+        return "";
     }
     
     return "";
@@ -33,8 +41,13 @@ string getInputFile(const string& input) {
         string filename = input.substr(pos + 1);
         size_t first = filename.find_first_not_of(" \t");
         if (first != string::npos) {
-            size_t end = filename.find_first_of(" \t>", first);
-            return (end != string::npos) ? filename.substr(first, end - first) : filename.substr(first);
+            size_t end = filename.find_first_of(" \t>\n\r", first);
+            if (end != string::npos) {
+                return filename.substr(first, end - first);
+            } else {
+                size_t last = filename.find_last_not_of(" \t\n\r");
+                return filename.substr(first, last - first + 1);
+            }
         }
     }
     return "";

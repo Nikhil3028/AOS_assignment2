@@ -2,7 +2,7 @@
 
 ## Project Explanation
 
-This project is a comprehensive implementation of a **POSIX-compliant shell** written in C++ that replicates the core functionality of Unix/Linux shells like bash. The shell provides an interactive command-line interface where users can execute both built-in commands and external system programs.
+This project is a comprehensive implementation of a **POSIX shell** written in C++ that replicates the core functionality of Unix/Linux shells like bash. The shell provides an interactive command-line interface where users can execute both built-in commands and external system programs.
 
 
 ## File Structure
@@ -66,7 +66,7 @@ make clean     # Remove object files and executable
 make rebuild   # Clean and rebuild from scratch
 ```
 
-## 🛠️ Commands and Features Implementation
+##  Commands and Features Implementation
 
 ### **1. `echo` Command**
 - **Purpose**: Display text to standard output

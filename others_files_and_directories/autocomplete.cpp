@@ -2,7 +2,7 @@
 
 // Built-in commands for completion
 static const char* builtin_commands[] = {
-    "echo", "pwd", "cd", "ls", "pinfo", "search", "clear", "exit", NULL
+    "echo", "pwd", "cd", "ls", "pinfo", "search", "clear", "exit", "history", NULL
 };
 
 // Function to generate command completions

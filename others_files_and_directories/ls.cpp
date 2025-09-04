@@ -83,20 +83,7 @@ void print_dir(const string& dir_path, bool show_all, bool long_format) {
 
 
 void ls(const string& arg_line) {
-    int saved_stdout = -1;
     string clean_arg_line = arg_line;
-    
-    if (hasRedirection(arg_line)) {
-        bool append;
-        string filename = getOutputFile(arg_line, append);
-        if (!filename.empty()) {
-            saved_stdout = setupOutputRedirection(filename, append);
-            if (saved_stdout == -1) {
-                return;
-            }
-            clean_arg_line = getCleanCommand(arg_line);
-        }
-    }
     
     vector<string> tokens;
     stringstream ss(clean_arg_line);
@@ -169,6 +156,5 @@ void ls(const string& arg_line) {
             print_dir(".", show_all, long_format);
         }
     }
-    
-    restoreOutput(saved_stdout);
+
 }

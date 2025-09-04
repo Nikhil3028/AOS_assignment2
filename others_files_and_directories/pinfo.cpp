@@ -2,21 +2,8 @@
 
 // Process information command implementation
 void pinfo(const string& pid_str) {
-    int saved_stdout = -1;
     string clean_pid_str = pid_str;
-    
-    if (hasRedirection(pid_str)) {
-        bool append;
-        string filename = getOutputFile(pid_str, append);
-        if (!filename.empty()) {
-            saved_stdout = setupOutputRedirection(filename, append);
-            if (saved_stdout == -1) {
-                return;
-            }
-            clean_pid_str = getCleanCommand(pid_str);
-        }
-    }
-    
+       
     pid_t pid;
     if (clean_pid_str.empty()) {
         pid = getpid();
@@ -25,7 +12,6 @@ void pinfo(const string& pid_str) {
             pid = stoi(clean_pid_str);
         } catch (const exception&) {
             cout << "Invalid PID: " << clean_pid_str << endl;
-            restoreOutput(saved_stdout);
             return;
         }
     }
@@ -36,7 +22,6 @@ void pinfo(const string& pid_str) {
     
     if (!stat_file) {
         cout << "Process with PID " << pid << " not found" << endl;
-        restoreOutput(saved_stdout);
         return;
     }
     
@@ -137,5 +122,5 @@ void pinfo(const string& pid_str) {
     cout << "memory -- " << vm_size_kb << " {Virtual Memory}" << endl;
     cout << "Executable Path -- " << exec_path << endl;
     
-    restoreOutput(saved_stdout);
+   
 }

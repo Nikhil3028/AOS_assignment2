@@ -1,9 +1,11 @@
 #include "Header.h"
 
+// Check if input contains pipe operator
 bool hasPipe(const string& input) {
     return input.find("|") != string::npos;
 }
 
+// Split pipeline into individual commands
 vector<string> splitPipe(const string& input) {
     vector<string> commands;
     stringstream ss(input);
@@ -19,10 +21,12 @@ vector<string> splitPipe(const string& input) {
     return commands;
 }
 
+// Check if command is built-in
 bool isInternalCommand(const string& cmd) {
     return (cmd == "echo" || cmd == "pwd" || cmd == "ls" || cmd == "pinfo" || cmd == "search");
 }
 
+// Execute built-in commands in pipeline
 void runInternal(const string& cmd, const string& full) {
     if (cmd == "echo") {
         echo(full);
@@ -49,10 +53,9 @@ void runInternal(const string& cmd, const string& full) {
         string c, file;
         ss >> c >> file;
         
-        // If no filename provided, read from stdin (for pipes)
+        // Read filename from stdin if not provided
         if (file.empty()) {
             getline(cin, file);
-            // Remove any trailing whitespace
             size_t end = file.find_last_not_of(" \t\n\r");
             if (end != string::npos) file = file.substr(0, end + 1);
         }
@@ -61,8 +64,9 @@ void runInternal(const string& cmd, const string& full) {
     }
 }
 
+// Execute command with I/O redirection
 void runCommand(const string& cmd, int input_fd, int output_fd) {
-    // Set up input redirection
+    // Setup input redirection
     if (input_fd != -1) {
         if (dup2(input_fd, STDIN_FILENO) == -1) {
             perror("dup2 input");
@@ -71,7 +75,7 @@ void runCommand(const string& cmd, int input_fd, int output_fd) {
         close(input_fd);
     }
     
-    // Set up output redirection
+    // Setup output redirection
     if (output_fd != -1) {
         if (dup2(output_fd, STDOUT_FILENO) == -1) {
             perror("dup2 output");
@@ -91,7 +95,7 @@ void runCommand(const string& cmd, int input_fd, int output_fd) {
         exit(0);
     }
     
-    // Parse arguments for external commands
+    // Parse external command arguments
     vector<string> args;
     string token;
     ss.str(cmd);
@@ -107,6 +111,7 @@ void runCommand(const string& cmd, int input_fd, int output_fd) {
     exit(1);
 }
 
+// Execute pipeline of commands
 void executePipe(const vector<string>& commands) {
     if (commands.empty()) return;
     
@@ -115,7 +120,7 @@ void executePipe(const vector<string>& commands) {
     for (size_t i = 0; i < commands.size(); i++) {
         int pipefd[2] = {-1, -1};
         
-        // Create pipe for all but the last command
+        // Create pipe for all but last command
         if (i < commands.size() - 1) {
             if (pipe(pipefd) == -1) {
                 perror("pipe");
@@ -136,7 +141,7 @@ void executePipe(const vector<string>& commands) {
         if (pid == 0) {
             // Child process
             runCommand(commands[i], prev_fd, pipefd[1]);
-            exit(1); // Should never reach here
+            exit(1);
         }
         
         // Parent process
@@ -144,7 +149,6 @@ void executePipe(const vector<string>& commands) {
         if (pipefd[1] != -1) close(pipefd[1]);
         prev_fd = pipefd[0];
         
-        // Wait for this process before starting the next
         int status;
         waitpid(pid, &status, 0);
     }
@@ -152,6 +156,7 @@ void executePipe(const vector<string>& commands) {
     if (prev_fd != -1) close(prev_fd);
 }
 
+// Main pipeline execution
 void executePipeline(const string& input) {
     vector<string> commands = splitPipe(input);
     executePipe(commands);
